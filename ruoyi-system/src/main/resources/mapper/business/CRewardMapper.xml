@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.ruoyi.business.mapper.CRewardMapper" >
+  <resultMap id="BaseResultMap" type="com.ruoyi.business.model.CReward" >
+    <!--
+      WARNING - @mbg.generated
+    -->
+    <id column="id" property="id" jdbcType="BIGINT" />
+    <result column="address" property="address" jdbcType="VARCHAR" />
+    <result column="coin" property="coin" jdbcType="VARCHAR" />
+    <result column="reward_amount" property="rewardAmount" jdbcType="DECIMAL" />
+    <result column="usdt_amount" property="usdtAmount" jdbcType="DECIMAL" />
+    <result column="order_id" property="orderId" jdbcType="BIGINT" />
+    <result column="reward_type" property="rewardType" jdbcType="VARCHAR" />
+    <result column="team_level" property="teamLevel" jdbcType="INTEGER" />
+    <result column="team_count" property="teamCount" jdbcType="INTEGER" />
+    <result column="remark" property="remark" jdbcType="VARCHAR" />
+    <result column="is_take" property="isTake" jdbcType="INTEGER" />
+    <result column="withdraw_id" property="withdrawId" jdbcType="BIGINT" />
+    <result column="create_time" property="createTime" jdbcType="TIMESTAMP" />
+    <result column="update_time" property="updateTime" jdbcType="TIMESTAMP" />
+  </resultMap>
+
+  <select id="getRewardUsdtSum" resultType="java.math.BigDecimal">
+    select sum(reward_amount) from c_reward where reward_type='team'
+  </select>
+
+  <select id="getRewardSum" resultType="java.math.BigDecimal">
+    select sum(reward_amount) from c_reward where reward_type=#{type} and address=#{address}
+  </select>
+
+  <select id="getRewardSumByTypes" resultType="java.math.BigDecimal">
+    select sum(reward_amount) from c_reward where  address=#{address} and reward_type IN
+    <foreach collection="types" item="item" open="(" separator="," close=")">
+      #{item}
+    </foreach>
+  </select>
+
+  <select id="getRewardList" resultMap="BaseResultMap">
+    select t1.*,t2.address orderAddress from c_reward t1
+     left join c_buy_order t2 on t1.order_id=t2.id
+    where  t1.address=#{address} and t1.reward_type IN
+    <foreach collection="types" item="item" open="(" separator="," close=")">
+      #{item}
+    </foreach>
+  </select>
+
+  <select id="getBackRewardList" resultMap="BaseResultMap">
+    SELECT t1.* FROM `c_reward` t1
+    where 1=1
+    <if test="address !=null and address !=''">
+      and t1.address=lower(#{address})
+    </if>
+    <if test="startTime !=null">
+      and to_days(t1.create_time) >= to_days(#{startTime})
+    </if>
+    <if test="endTime !=null">
+      and to_days(t1.create_time) &lt;= to_days(#{endTime})
+    </if>
+    <if test="type !=null and type !=''">
+      and t1.reward_type=lower(#{type})
+    </if>
+    order by t1.id desc
+  </select>
+
+  <select id="getBackRewardListSum" resultType="com.alibaba.fastjson2.JSONObject">
+    select reward_type rewardType,coin, sum(reward_amount) rewardAmount from c_reward t1
+    where 1=1
+    <if test="address !=null and address !=''">
+      and t1.address=lower(#{address})
+    </if>
+    <if test="startTime !=null">
+      and to_days(t1.create_time) >= to_days(#{startTime})
+    </if>
+    <if test="endTime !=null">
+      and to_days(t1.create_time) &lt;= to_days(#{endTime})
+    </if>
+    <if test="type !=null and type !=''">
+      and t1.reward_type=lower(#{type})
+    </if>
+    group by reward_type,coin
+
+  </select>
+
+
+</mapper>

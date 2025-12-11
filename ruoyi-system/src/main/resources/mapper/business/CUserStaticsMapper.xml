@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.business.mapper.CUserStaticsMapper">
+  <resultMap id="BaseResultMap" type="com.ruoyi.business.model.CUserStatics">
+    <!--
+      WARNING - @mbg.generated
+
+          @Column(name = "user_today_count")
+    private Integer userTodayCount;
+    -->
+    <id column="id" jdbcType="BIGINT" property="id" />
+    <result column="uid" jdbcType="BIGINT" property="uid" />
+    <result column="address" jdbcType="VARCHAR" property="address" />
+    <result column="invite_count" jdbcType="INTEGER" property="inviteCount" />
+    <result column="team_count" jdbcType="INTEGER" property="teamCount" />
+    <result column="total_user_count" jdbcType="INTEGER" property="totalUserCount" />
+    <result column="total_user_amount" jdbcType="DECIMAL" property="totalUserAmount" />
+    <result column="total_team_count" jdbcType="INTEGER" property="totalTeamCount" />
+    <result column="total_team_amount" jdbcType="DECIMAL" property="totalTeamAmount" />
+    <result column="team_level" jdbcType="INTEGER" property="teamLevel" />
+    <result column="team_level_name" jdbcType="VARCHAR" property="teamLevelName" />
+    <result column="node_level" jdbcType="INTEGER" property="nodeLevel" />
+    <result column="buy_token_amount" jdbcType="DECIMAL" property="buyTokenAmount" />
+    <result column="buy_usdt_amount" jdbcType="DECIMAL" property="buyUsdtAmount" />
+    <result column="last_pay_time" jdbcType="TIMESTAMP" property="lastPayTime" />
+    <result column="create_time" jdbcType="TIMESTAMP" property="createTime" />
+    <result column="update_time" jdbcType="TIMESTAMP" property="updateTime" />
+
+    <result column="user_today_count" jdbcType="INTEGER" property="userTodayCount" />
+
+  </resultMap>
+
+
+
+
+
+  <select id="getByAddressForUpdate" resultMap="BaseResultMap">
+    select * from c_user_statics
+    where address=#{address} for update
+  </select>
+
+  <select id="getDirectEffectCount" resultType="java.lang.Integer">
+    select count(1) from c_user_statics t1
+    left join sys_user t2 on t1.address=t2.address
+    where t2.parent_address=#{address} and t1.last_pay_time &gt;= NOW() - INTERVAL 24 HOUR
+  </select>
+
+  <select id="getIpUserList" resultMap="BaseResultMap">
+    select t1.* from c_user_statics t1
+    left join c_user_pp t2 on t1.address=t2.address
+    where t2.id is null and t1.total_user_count&gt;0
+    and t1.id&gt;=#{fromId} and t1.id &lt;=#{toId}
+    order by t1.id asc
+  </select>
+
+  <select id="getUserDirectList" resultType="com.alibaba.fastjson2.JSONObject">
+    select t1.address,t1.create_time createTime,t1.total_user_count totalUserCount,
+           t1.buy_usdt_amount buyUsdtAmount,t3.status verifiedStatus from c_user_statics t1
+           left join sys_user t2 on t1.uid=t2.user_id
+           left join c_address_verified t3 on t1.address=t3.address
+    where t2.parent_address=#{address}
+  </select>
+</mapper>

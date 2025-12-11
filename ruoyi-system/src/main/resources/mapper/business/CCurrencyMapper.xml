@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.ruoyi.business.mapper.CCurrencyMapper" >
+  <resultMap id="BaseResultMap" type="com.ruoyi.business.model.CCurrency" >
+    <!--
+      WARNING - @mbg.generated
+    -->
+    <id column="id" property="id" jdbcType="BIGINT" />
+    <result column="currency" property="currency" jdbcType="VARCHAR" />
+    <result column="contract_address" property="contractAddress" jdbcType="VARCHAR" />
+    <result column="chain_name" property="chainName" jdbcType="VARCHAR" />
+    <result column="chain_num" property="chainNum" jdbcType="INTEGER" />
+    <result column="recharge_enabled" property="rechargeEnabled" jdbcType="INTEGER" />
+    <result column="withdraw_enabled" property="withdrawEnabled" jdbcType="INTEGER" />
+    <result column="withdraw_fee_ratio" property="withdrawFeeRatio" jdbcType="DECIMAL" />
+    <result column="withdraw_fee_amount" property="withdrawFeeAmount" jdbcType="DECIMAL" />
+    <result column="withdraw_max" property="withdrawMax" jdbcType="DECIMAL" />
+    <result column="withdraw_min" property="withdrawMin" jdbcType="DECIMAL" />
+    <result column="audit_min" property="auditMin" jdbcType="DECIMAL" />
+    <result column="usdt_price" property="usdtPrice" jdbcType="DECIMAL" />
+    <result column="create_time" property="createTime" jdbcType="TIMESTAMP" />
+    <result column="update_time" property="updateTime" jdbcType="TIMESTAMP" />
+    <result column="decimals" property="decimals" jdbcType="INTEGER" />
+  </resultMap>
+</mapper>

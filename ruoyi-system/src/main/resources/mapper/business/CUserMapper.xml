@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.ruoyi.business.mapper.CUserMapper" >
+  <resultMap id="BaseResultMap" type="com.ruoyi.business.model.CUser" >
+    <!--
+      WARNING - @mbg.generated
+    -->
+    <id column="user_id" property="userId" jdbcType="BIGINT" />
+    <result column="address" property="address" jdbcType="VARCHAR" />
+    <result column="parent_id" property="parentId" jdbcType="BIGINT" />
+    <result column="parent_address" property="parentAddress" jdbcType="VARCHAR" />
+    <result column="user_depth" property="userDepth" jdbcType="INTEGER" />
+    <result column="dept_id" property="deptId" jdbcType="BIGINT" />
+    <result column="user_name" property="userName" jdbcType="VARCHAR" />
+    <result column="nick_name" property="nickName" jdbcType="VARCHAR" />
+    <result column="user_type" property="userType" jdbcType="VARCHAR" />
+    <result column="email" property="email" jdbcType="VARCHAR" />
+    <result column="phonenumber" property="phonenumber" jdbcType="VARCHAR" />
+    <result column="sex" property="sex" jdbcType="CHAR" />
+    <result column="avatar" property="avatar" jdbcType="VARCHAR" />
+    <result column="password" property="password" jdbcType="VARCHAR" />
+    <result column="status" property="status" jdbcType="CHAR" />
+    <result column="del_flag" property="delFlag" jdbcType="CHAR" />
+    <result column="login_ip" property="loginIp" jdbcType="VARCHAR" />
+    <result column="login_date" property="loginDate" jdbcType="TIMESTAMP" />
+    <result column="create_by" property="createBy" jdbcType="VARCHAR" />
+    <result column="create_time" property="createTime" jdbcType="TIMESTAMP" />
+    <result column="update_by" property="updateBy" jdbcType="VARCHAR" />
+    <result column="update_time" property="updateTime" jdbcType="TIMESTAMP" />
+    <result column="remark" property="remark" jdbcType="VARCHAR" />
+    <result column="user_tree" property="userTree" jdbcType="LONGVARCHAR" />
+    <result column="user_level" property="userLevel" jdbcType="INTEGER" />
+    <result column="experience_amount" property="experienceAmount" jdbcType="DECIMAL" />
+    <result column="token_amount" property="tokenAmount" jdbcType="DECIMAL" />
+    <result column="is_count" property="isCount" jdbcType="INTEGER" />
+
+  </resultMap>
+
+  <select id="getBackUserList" resultType="com.alibaba.fastjson2.JSONObject">
+    SELECT t1.remark,t1.address,t1.parent_address parentAddress,
+           t2.total_user_count totalUserCount,t2.total_team_count totalTeamCount
+           ,t2.buy_usdt_amount buyUsdtAmount,t3.status verifiedStatus,
+            t2.node_level nodeLevel,
+            t1.status,t1.user_id uid,
+            t1.create_time createTime
+    FROM `sys_user` t1
+    LEFT JOIN `c_user_statics` t2 ON t1.user_id=t2.uid
+    left join c_address_verified t3 on t1.address=t3.address
+    WHERE t1.user_type='01'
+    <if test="address !=null and address !=''">
+      and t1.address=lower(#{address})
+    </if>
+    <if test="parentAddress !=null and parentAddress !=''">
+      and t1.parent_address=lower(#{parentAddress})
+    </if>
+    <if test="startTime !=null">
+      and to_days(t1.create_time) >= to_days(#{startTime})
+    </if>
+    <if test="endTime !=null">
+      and to_days(t1.create_time) &lt;= to_days(#{endTime})
+    </if>
+      <if test="nodeLevel !=null and nodeLevel !=''">
+          and t2.node_level =#{nodeLevel}
+      </if>
+    order by t1.create_time desc
+  </select>
+
+  <select id="getTeamCount" resultType="java.lang.Integer">
+    select count(1) from sys_user
+    where user_tree like concat(#{userTree},'-%')
+  </select>
+
+  <select id="getNotTokenAmountUserList" resultMap="BaseResultMap">
+    select t1.* from sys_user t1
+    left join c_user_statics t2 on t1.user_id=t2.uid
+    where t1.user_type='01' and t2.remain_effect_amount>0 and t1.token_amount is null
+  </select>
+
+  <select id="getNodeUserList" resultMap="BaseResultMap">
+    select t1.* from sys_user t1
+    left join c_user_statics t2 on t1.user_id=t2.uid
+    where t1.user_type='01' and t2.node_level>0
+  </select>
+
+    <update id="updateUserBakAddress" >
+        update sys_user_relation set address=#{toAddress} where address=#{address}
+    </update>
+
+    <update id="updateUserBakTeamAddress" >
+        update sys_user_relation set parent_address=#{toAddress} where parent_address=#{address}
+    </update>
+
+  <select id="getBigUser" resultMap="BaseResultMap">
+    select t1.* from sys_user t1
+                       left join c_user_statics t2 on t1.user_id=t2.uid
+    where t1.parent_address=#{address}
+    order by (t2.team_amount+ t2.total_user_amount) desc limit 1
+  </select>
+
+  <select id="getCountByIp" resultType="java.lang.Integer">
+    select count(1) from sys_user
+    where login_ip =#{ip} and login_ip is not null and login_ip !=''
+  </select>
+
+  <select id="getChildCountByLevel" resultType="java.lang.Integer">
+    select count(1) from sys_user where user_tree like concat(#{userTree},'-%')
+                                    and user_depth-#{userDepth}=#{depth}
+  </select>
+
+  <select id="getDirectCountList" resultType="com.alibaba.fastjson2.JSONObject">
+    SELECT t1.parent_address parentAddress,COUNT(1) directCount FROM sys_user t1
+        left join c_user_receive t2  on t1.address=t2.address
+         where t2.id is null
+    GROUP BY parent_address HAVING directCount>40
+    ORDER BY directCount DESC
+
+  </select>
+
+  <select id="getVerifiedCount" resultType="java.lang.Integer">
+    select count(1) from sys_user t1
+    left join c_address_verified t2 on t1.address=t2.address
+    where t1.parent_address=#{address} and t2.status=2
+  </select>
+
+</mapper>

@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.ruoyi.business.mapper.CBalanceMapper" >
+  <resultMap id="BaseResultMap" type="com.ruoyi.business.model.CBalance" >
+    <!--
+      WARNING - @mbg.generated
+    -->
+    <id column="id" property="id" jdbcType="BIGINT" />
+    <result column="uid" property="uid" jdbcType="BIGINT" />
+    <result column="address" property="address" jdbcType="VARCHAR" />
+    <result column="currency" property="currency" jdbcType="VARCHAR" />
+    <result column="currency_id" property="currencyId" jdbcType="BIGINT" />
+    <result column="balance_type" property="balanceType" jdbcType="VARCHAR" />
+    <result column="amount" property="amount" jdbcType="DECIMAL" />
+    <result column="frozen_amount" property="frozenAmount" jdbcType="DECIMAL" />
+    <result column="create_time" property="createTime" jdbcType="TIMESTAMP" />
+    <result column="update_time" property="updateTime" jdbcType="TIMESTAMP" />
+    <result column="version" property="version" jdbcType="INTEGER" />
+  </resultMap>
+
+  <update id="addBalance">
+    update c_balance set amount=amount+#{amount},`version`=`version`+1
+    where id=#{id} and amount+#{amount} &gt;=0 and `version`=#{version}
+  </update>
+
+  <update id="frozenBalance">
+    update c_balance set amount=amount+#{amount},frozen_amount=frozen_amount+#{frozenAmount},`version`=`version`+1
+    where id=#{id} and amount+#{amount} &gt;=0 and frozen_amount+#{frozenAmount}>=0 and `version`=#{version}
+  </update>
+
+  <select id="getBalanceList" resultType="com.alibaba.fastjson2.JSONObject">
+    SELECT t1.currency,t1.usdt_price usdtPrice,ifnull(t2.amount,0) as amount,ifnull(t2.amount*t1.usdt_price,0) AS totalAmount,
+    t1.recharge_enabled rechargeEnabled,
+    t1.withdraw_enabled withdrawEnabled,
+    t1.withdraw_min withdrawMin,
+    t1.withdraw_fee_ratio withdrawFeeRatio
+    FROM c_currency t1
+    LEFT JOIN c_balance t2 ON t1.currency=t2.currency and t2.address=#{address}
+    WHERE t1.currency in ('USDT','BUFF')
+    <if test="coin !=null and coin !=''">
+      and t1.currency=#{coin}
+    </if>
+<!--    <if test="balanceType !=null and balanceType !=''">-->
+<!--      and t2.balance_type=#{balanceType}-->
+<!--    </if>-->
+  </select>
+
+<!--  left join sys_user t2 on t1.address=t2.address-->
+  <select id="getBackBalanceList" resultMap="BaseResultMap">
+    SELECT t1.* from c_balance t1
+    WHERE 1=1
+    <if test="coin !=null and coin !=''">
+      and t1.currency=#{coin}
+    </if>
+    <if test="address !=null and address !=''">
+      and t1.address=#{address}
+    </if>
+    <if test="balanceType !=null and balanceType !=''">
+      and t1.balance_type=#{balanceType}
+    </if>
+    order by t1.amount desc
+  </select>
+
+  <select id="getSumAmount" resultType="java.math.BigDecimal">
+    SELECT sum(amount) from c_balance t1
+    WHERE  t1.currency=#{currency}
+  </select>
+
+
+  <select id="getBackBalanceListSum" resultType="com.alibaba.fastjson2.JSONObject">
+    SELECT sum(t1.amount) as 'amount',t1.currency from c_balance t1
+    WHERE 1=1
+    <if test="coin !=null and coin !=''">
+      and t1.currency=#{coin}
+    </if>
+    <if test="address !=null and address !=''">
+      and t1.address=#{address}
+    </if>
+    <if test="balanceType !=null and balanceType !=''">
+      and t1.balance_type=#{balanceType}
+    </if>
+    group by t1.currency
+
+  </select>
+</mapper>

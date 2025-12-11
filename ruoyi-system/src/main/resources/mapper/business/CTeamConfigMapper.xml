@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.ruoyi.business.mapper.CTeamConfigMapper" >
+  <resultMap id="BaseResultMap" type="com.ruoyi.business.model.CTeamConfig" >
+    <!--
+      WARNING - @mbg.generated
+    -->
+    <id column="id" property="id" jdbcType="BIGINT" />
+    <result column="level" property="level" jdbcType="INTEGER" />
+    <result column="level_name" property="levelName" jdbcType="VARCHAR" />
+    <result column="team_count" property="teamAmount" jdbcType="INTEGER" />
+    <result column="reward_amount" property="rewardAmount" jdbcType="DECIMAL" />
+    <result column="create_time" property="createTime" jdbcType="TIMESTAMP" />
+    <result column="update_time" property="updateTime" jdbcType="TIMESTAMP" />
+  </resultMap>
+
+  <select id="getList" resultType="com.alibaba.fastjson2.JSONObject">
+    SELECT t1.level,t1.team_count teamCount,t1.reward_amount rewardAmount,t2.is_take isTake
+    FROM `c_team_config` t1
+    LEFT JOIN `c_reward` t2 ON t1.level=t2.team_level AND t2.address=#{address} AND t2.reward_type='team'
+  </select>
+</mapper>

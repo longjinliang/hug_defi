@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.ruoyi.business.mapper.CFeeOrderMapper" >
+  <resultMap id="BaseResultMap" type="com.ruoyi.business.model.CFeeOrder" >
+    <!--
+      WARNING - @mbg.generated
+    -->
+    <id column="id" property="id" jdbcType="BIGINT" />
+    <result column="address" property="address" jdbcType="VARCHAR" />
+    <result column="to_address" property="toAddress" jdbcType="VARCHAR" />
+    <result column="coin" property="coin" jdbcType="VARCHAR" />
+    <result column="amount" property="amount" jdbcType="DECIMAL" />
+    <result column="usdt_amount" property="usdtAmount" jdbcType="DECIMAL" />
+    <result column="status" property="status" jdbcType="INTEGER" />
+    <result column="token_amount" property="tokenAmount" jdbcType="DECIMAL" />
+    <result column="hash" property="hash" jdbcType="VARCHAR" />
+    <result column="take_flag" property="takeFlag" jdbcType="INTEGER" />
+    <result column="login_ip" property="loginIp" jdbcType="VARCHAR" />
+    <result column="create_time" property="createTime" jdbcType="TIMESTAMP" />
+    <result column="update_time" property="updateTime" jdbcType="TIMESTAMP" />
+  </resultMap>
+
+  <select id="getPayCount" resultType="java.lang.Integer">
+    SELECT COUNT(1) FROM `c_fee_order` t1
+  </select>
+
+  <select id="getUserCount" resultType="java.lang.Integer">
+    select count(distinct(address)) from c_fee_order
+  </select>
+
+  <select id="getUsdtSum" resultType="java.math.BigDecimal">
+    select sum(usdt_amount) from c_fee_order
+  </select>
+
+  <select id="getPayFeeList" resultType="com.alibaba.fastjson2.JSONObject">
+    select t1.address,t1.create_time createTime,t1.token_amount tokenAmount
+    from c_fee_order t1
+    <if test="address !=null and address !=''">
+      where t1.address=#{address}
+    </if>
+    order by t1.create_time desc
+  </select>
+
+  <select id="getLastOrder" resultMap="BaseResultMap">
+    select t1.* from c_fee_order t1
+    where t1.address=#{address} order by t1.create_time desc limit 1
+  </select>
+
+  <select id="getYesterdayOrder" resultMap="BaseResultMap">
+    select t1.* from c_fee_order t1
+    where t1.address=#{address} and to_days(t1.create_time)=to_days(now())-1 order by t1.create_time desc limit 1
+  </select>
+
+  <select id="getTodayOrder" resultMap="BaseResultMap">
+    select t1.* from c_fee_order t1
+    where t1.address=#{address} and to_days(t1.create_time)=to_days(now()) order by t1.create_time desc limit 1
+  </select>
+
+  <select id="getPayCountByTime" resultType="java.lang.Integer">
+    select count(1) from c_fee_order t1
+    where t1.address=#{address} and t1.create_time>=#{startTime} and t1.create_time &lt;=#{endTime}
+  </select>
+
+  <select id="getUserPaySum" resultType="com.alibaba.fastjson2.JSONObject">
+    select GROUP_CONCAT(login_ip) ipStr,sum(token_amount) tokenAmount,count(distinct(login_ip)) ipCount,count(1) orderCount
+    from c_fee_order where address=#{address}
+  </select>
+
+  <select id="getTodayCount" resultType="java.lang.Integer">
+    select count(1) from c_fee_order where address=#{address} and to_days(create_time)=to_days(now())
+  </select>
+
+  <select id="getTotalTokenAmount" resultType="java.math.BigDecimal">
+    select sum(token_amount) from c_fee_order
+  </select>
+
+  <select id="getTeamPayCount" resultType="java.lang.Integer">
+    select count(1) from c_fee_order t1
+    left join sys_user t2 on t1.address=t2.address
+    where t2.user_tree like concat(#{userTree},'-%')
+  </select>
+
+  <select id="getTeamEffectCount" resultType="java.lang.Integer">
+    select count(1) from  sys_user t2
+    left join c_user_statics t3 on t2.address=t3.address
+    where t2.user_tree like concat(#{userTree},'-%')
+      and t3.user_today_count>=3
+      and to_days(t3.last_pay_time)=to_days(now())
+  </select>
+
+
+  <select id="getBackPayFeeList" resultMap="BaseResultMap">
+    select t1.*,if(t2.id is null,'2','1') as isSystem from c_fee_order t1
+    left join c_user_receive t2 on t1.address=t2.address
+    where 1=1
+    <if test="address !=null and address !=''">
+      and t1.address=lower(#{address})
+    </if>
+    <if test="startTime !=null">
+      and to_days(t1.create_time) >= to_days(#{startTime})
+    </if>
+    <if test="endTime !=null">
+      and to_days(t1.create_time) &lt;= to_days(#{endTime})
+    </if>
+
+    order by t1.create_time desc
+  </select>
+
+  <select id="getBackPayFeeListSum" resultType="com.alibaba.fastjson2.JSONObject">
+    select ifnull(sum(amount),0) as sumAmount,
+           count(1) feeCount,
+           ifnull(sum(token_amount),0) as tokenAmount,
+           ifnull(sum(usdt_amount),0) as usdtAmount from c_fee_order t1
+    where 1=1
+    <if test="address !=null and address !=''">
+      and t1.address=lower(#{address})
+    </if>
+    <if test="startTime !=null">
+      and to_days(t1.create_time) >= to_days(#{startTime})
+    </if>
+    <if test="endTime !=null">
+      and to_days(t1.create_time) &lt;= to_days(#{endTime})
+    </if>
+
+  </select>
+
+  <select id="getBackPayFeeStatics" resultType="com.alibaba.fastjson2.JSONObject">
+    SELECT
+      DATE_FORMAT(t1.create_time, '%Y-%m-%d') AS createTime,
+      count(1) AS userCount,
+      sum(t1.amount) AS userEth
+    FROM `c_fee_order` t1
+    GROUP BY DATE_FORMAT(t1.create_time, '%Y-%m-%d')
+  </select>
+
+
+</mapper>
