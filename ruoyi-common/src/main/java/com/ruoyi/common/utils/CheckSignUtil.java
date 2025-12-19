@@ -109,33 +109,6 @@ public class CheckSignUtil {
 
 
 
-  /**
-   * 测试
-   */
-  public static void main(String args[]) throws Exception {
 
-    long time = 1760584538;
-    String key1=(time+"00000000000000").substring(0,16);
-
-
-    System.out.println(key1);
-
-    String test1 = "sa";
-    String test =new String(test1.getBytes(),"UTF-8");
-    String data = "omw+iziMRtvyPuvq72cVKg==";
-    String key =  KEY;
-    String iv = IV;
-    // /g2wzfqvMOeazgtsUVbq1kmJawROa6mcRAzwG1/GeJ4=
-    data = encrypt(test, key, iv);
-    System.out.println("数据："+test);
-    System.out.println("加密："+data);
-    data="yn0t3r+FoN4NB1wknv2gKtoUEuMfQyo4G55hQ/MDTc2k9qdvRJVsQ79emvlA4TAc3Kp15TjAb5KEm48tZVCcMs5ASmBImCLCcpA4p6k6v5ojDtC8NbpeJ30YuNxyt1Jt2kpFHVA/+ByFZL2augs7qqfzaqEkoiL2RT+hS4PSz+4N6Ig7xIuKf5gOTzlCheKN";
-    key=key1;
-    iv=key1;
-    String jiemi =desEncrypt(data, key, iv).trim();
-    System.out.println("解密："+jiemi);
-
-
-  }
 
 }
