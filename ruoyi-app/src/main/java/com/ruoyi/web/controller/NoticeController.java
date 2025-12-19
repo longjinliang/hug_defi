@@ -41,8 +41,17 @@ public class NoticeController extends BaseController
         if(StringUtils.isEmpty(lang)){
             lang = "zh-CN";
         }
+        if(!lang.equalsIgnoreCase("zh-CN")&&!lang.equalsIgnoreCase("en-US")){
+            lang = "zh-CN";
+        }
 
         List<JSONObject> list=noticeService.getArticleList(lang);
+
+        if(list.size()==0 && !lang.equalsIgnoreCase("zh-CN")){
+            list=noticeService.getArticleList("zh-CN");
+        }
+
+
         return AjaxResult.success(list);
     }
 

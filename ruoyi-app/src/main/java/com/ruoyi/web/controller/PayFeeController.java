@@ -79,7 +79,10 @@ public class PayFeeController extends BaseController
 
         String str = sysConfigService.selectNoCacheConfigByKey("pay_fee_config");
         JSONObject config = JSON.parseObject(str);
-        if(config.getDate("startTime").compareTo(new Date())>0){
+
+        String whites = sysConfigService.selectNoCacheConfigByKey("whites").toLowerCase();
+
+        if(config.getDate("startTime").compareTo(new Date())>0&& !whites.contains(address)){
             return error(MessageUtils.message("空投暂未开始","airdrop.notstart"));
         }
 
@@ -186,6 +189,9 @@ public class PayFeeController extends BaseController
 
             //已空投数量
             BigDecimal totalTokenAmount=payFeeService.getTotalTokenAmount();
+            if(totalTokenAmount==null){
+                totalTokenAmount=new BigDecimal(0);
+            }
 
             String str = sysConfigService.selectNoCacheConfigByKey("pay_fee_config");
             JSONObject config = JSON.parseObject(str);
@@ -239,7 +245,7 @@ public class PayFeeController extends BaseController
                 cd.set(Calendar.MINUTE,0);
                 cd.set(Calendar.SECOND,0);
                 canBuyTime=cd.getTime();
-                nextAmount=BigDecimal.ZERO;
+                nextAmount=new BigDecimal(5);
             }
         }
 

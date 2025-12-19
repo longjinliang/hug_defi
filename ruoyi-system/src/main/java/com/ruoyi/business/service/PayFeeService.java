@@ -217,7 +217,7 @@ public class PayFeeService {
         userStaticsService.updateStatics(userStatics);
 
 
-        if(todayCount>=3){
+        if(todayCount>=1){
             //团队奖励
             List<CTeamConfig> teamConfigList = getTeamConfigList();
             teamConfigList.sort((a,b)->a.getLevel()-b.getLevel());
@@ -235,10 +235,11 @@ public class PayFeeService {
                     //推荐多少位实名人数
                     int veriviedCount=userService.getVerifiedCount(parent.getAddress());
 
-                    int recordCount=3;
-                    if(todayCount !=3){
-                        recordCount=1;
-                    }
+//                    int recordCount=3;
+//                    if(todayCount !=3){
+//                        recordCount=1;
+//                    }
+                    int recordCount=1;
 
                     if(veriviedCount>=depth){
 
@@ -401,7 +402,11 @@ public class PayFeeService {
 
 
     public BigDecimal getTotalTokenAmount() {
-        return feeOrderMapper.getTotalTokenAmount();
+        BigDecimal totalTokenAmount = feeOrderMapper.getTotalTokenAmount();
+        if(totalTokenAmount==null){
+            totalTokenAmount = BigDecimal.ZERO;
+        }
+        return totalTokenAmount;
     }
 
     public int getTeamPayCount(String userTree) {

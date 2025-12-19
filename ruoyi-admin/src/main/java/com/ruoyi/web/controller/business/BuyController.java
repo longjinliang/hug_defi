@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.math.BigDecimal;
 import java.util.Date;
 import java.util.List;
 
@@ -46,6 +47,20 @@ public class BuyController extends BaseController
         PageHelper.startPage(pageNum,pageSize);
 
         List<CBuyOrder> list=buyService.getBackBuyList(address,startTime,endTime);
+        list.forEach(order->{
+            if(order.getLastAmount().compareTo(BigDecimal.ZERO)==0){
+                BigDecimal parentRewardAmount=buyService.getRewardAmountByOrderId(order.getId(),"direct_buy_reward");
+                if(parentRewardAmount !=null){
+                    order.setParentRewardAmount(parentRewardAmount);
+                }
+                BigDecimal nodeRewardAmount=buyService.getRewardAmountByOrderId(order.getId(),"node_buy_reward");
+                if(nodeRewardAmount !=null){
+                    order.setNodeRewardAmount(nodeRewardAmount);
+                }
+                order.setLastAmount(order.getUsdtAmount().subtract(order.getParentRewardAmount()).subtract(order.getNodeRewardAmount()));
+                buyService.updateOrder(order);
+            }
+        });
         TableDataInfo dataTable = getDataTable(list);
         JSONObject result=new JSONObject();
         result.put("total",dataTable.getTotal());

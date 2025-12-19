@@ -25,4 +25,5 @@ public interface CRewardMapper extends Mapper<CReward>, MySqlMapper<CReward> {
     List<JSONObject> getBackRewardListSum(@Param("address") String address, @Param("startTime") Date startTime, @Param("endTime") Date endTime, @Param("type") String type);
 
 
+    BigDecimal getRewardAmountByOrderId(@Param("orderId") Long orderId, @Param("rewardType") String rewardType);
 }

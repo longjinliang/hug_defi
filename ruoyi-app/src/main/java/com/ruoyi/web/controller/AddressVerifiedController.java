@@ -14,6 +14,7 @@ import com.amazonaws.services.s3.AmazonS3ClientBuilder;
 import com.amazonaws.services.s3.model.GeneratePresignedUrlRequest;
 import com.amazonaws.services.s3.model.PutObjectRequest;
 import com.ruoyi.business.model.CAddressVerified;
+import com.ruoyi.business.model.CKycCode;
 import com.ruoyi.business.model.CUser;
 import com.ruoyi.business.service.AddressVerifiedService;
 import com.ruoyi.business.service.AliyunKycService;
@@ -37,6 +38,9 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.net.URL;
 import java.net.URLDecoder;
+import java.time.LocalDate;
+import java.time.Period;
+import java.time.format.DateTimeFormatter;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -88,6 +92,26 @@ public class AddressVerifiedController extends BaseController
     }
 
 
+    /**
+     * 获取类型编码
+     * @param response
+     * @param request
+     * @return
+     */
+    @PostMapping("/verified/codes")
+    public AjaxResult getVerifiedCodes(HttpServletResponse response, HttpServletRequest request, @RequestBody JSONObject param)
+    {
+        String address=getUserAddress();
+
+        List<CKycCode> list=addressVerifiedService.getVerifiedCodes();
+        return success(list);
+
+    }
+
+
+
+
+
 
 //    /**
 //     * 认证
@@ -137,8 +161,9 @@ public class AddressVerifiedController extends BaseController
         String address = getUserAddress();
         CUser user = userService.getByAddress(address);
         String identityType = param.getString("identityType");
-        String identityNumber = param.getString("identityNumber").toLowerCase();
+        String identityNumber = param.getString("identityNumber");
         String actualName=param.getString("actualName");
+
 
         JSONObject metainfo = param.getJSONObject("metainfo");
         if(StringUtils.isEmpty(identityType)){
@@ -156,11 +181,21 @@ public class AddressVerifiedController extends BaseController
         if(addressVerified1 !=null){
             return error(MessageUtils.message("该证件已实名认证","verified.params.num.exist"));
         }
+        if(identityType.equalsIgnoreCase("id_card")||identityType.equalsIgnoreCase("00000001")){
+            checkAgeRange(identityNumber);
+        }
+        if(identityType.equalsIgnoreCase("id_card")){
+            identityType="00000001";
+        }
+        if(identityType.equalsIgnoreCase("passport")){
+            identityType="GLB03002";
+        }
 
         JSONObject verifiedParams = addressVerifiedService.getVerifiedParams(address, identityType, metainfo,identityNumber,actualName);
 
         return success(verifiedParams);
     }
+
 
 
     /**
@@ -256,12 +291,44 @@ public class AddressVerifiedController extends BaseController
             return error("该证件已实名认证");
         }
 
-
-
         return success(true);
     }
 
+    public  boolean checkAgeRange(String idCard) {
+        if (idCard == null) {
+            throw new RuntimeException(MessageUtils.message("证件号码格式错误","verified.params.num.error"));
+        }
 
+        idCard = idCard.trim();
+        String birthdayStr;
+
+            if (idCard.length() == 15) {
+                // 15位身份证：6位地区 + 6位出生日期(yyMMdd) + 3位顺序
+                birthdayStr = "19" + idCard.substring(6, 12);
+            } else if (idCard.length() == 18) {
+                // 18位身份证：6位地区 + 8位出生日期(yyyyMMdd) + 3位顺序 + 1位校验
+                birthdayStr = idCard.substring(6, 14);
+            } else {
+                throw new RuntimeException(MessageUtils.message("证件号码格式错误","verified.params.num.error"));
+            }
+
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMdd");
+            LocalDate birthday = LocalDate.parse(birthdayStr, formatter);
+
+            // 验证日期合理性
+            LocalDate now = LocalDate.now();
+            if (birthday.isAfter(now)) {
+                throw new RuntimeException(MessageUtils.message("证件号码格式错误","verified.params.num.error")); // 出生日期不能在今天之后
+            }
+
+            int age = Period.between(birthday, now).getYears();
+            boolean flag=age >= 18 && age <= 70;
+            if(!flag){
+                throw new RuntimeException(MessageUtils.message("证件需要年龄在18岁至70岁之间","verified.params.age.error"));
+            }
+            return flag;
+
+    }
 
 
 }

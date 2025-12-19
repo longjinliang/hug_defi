@@ -82,5 +82,9 @@
 
   </select>
 
+  <select id="getRewardAmountByOrderId" resultType="java.math.BigDecimal">
+    select sum(reward_amount) from c_reward where order_id=#{orderId} and reward_type=#{rewardType}
+  </select>
+
 
 </mapper>

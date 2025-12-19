@@ -70,7 +70,7 @@ public class AliyunKycService {
     }
 
 
-    public  InitializeResponse initialize(JSONObject metaObj, String verifiedType, String userId, String mechanId) {
+    public  InitializeResponse initialize(String productCode,JSONObject metaObj, String verifiedType, String userId, String mechanId) {
 
         try {
             com.aliyun.cloudauth_intl20220809.Client client = AliyunKycService.createClient();
@@ -78,17 +78,22 @@ public class AliyunKycService {
 
             String metainfo="{\"bioMetaInfo\":\"4.1.0:2916352,0\",\"deviceType\":\"h5\",\"ua\":\"Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Mobile/15E148 Safari/604.1\"}";
 
-            if(metainfo!=null){
+            if(metaObj!=null){
                 metainfo=JSON.toJSONString(metaObj);
             }
 
-            if(verifiedType.equals("id_card")){
-                initializeRequest.setProductCode("eKYC");
-                initializeRequest.setDocType("00000001");
-            }else{
-                initializeRequest.setProductCode("eKYC_PRO");
-                initializeRequest.setDocType("GLB03002");
+//            if(verifiedType.equals("id_card")){
+//                initializeRequest.setProductCode("eKYC");
+//                initializeRequest.setDocType("00000001");
+//            }else{
+//                initializeRequest.setProductCode("eKYC_PRO");
+//                initializeRequest.setDocType("GLB03002");
+//            }
+            if(productCode.equalsIgnoreCase("eKYC_PRO")){
+                initializeRequest.setSecurityLevel("01");
             }
+            initializeRequest.setProductCode(productCode);
+            initializeRequest.setDocType(verifiedType);
 
             initializeRequest.setMerchantBizId(mechanId);
             initializeRequest.setMetaInfo(metainfo);

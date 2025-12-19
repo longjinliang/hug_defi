@@ -54,6 +54,15 @@ public class CBuyOrder {
     @Column(name = "token_amount")
     private BigDecimal tokenAmount;
 
+    @Column(name = "parent_reward_amount")
+    private BigDecimal parentRewardAmount;
+
+    @Column(name = "node_reward_amount")
+    private BigDecimal nodeRewardAmount;
+
+    @Column(name = "last_amount")
+    private BigDecimal lastAmount;
+
     private String hash;
 
     @Column(name = "login_ip")
@@ -277,5 +286,29 @@ public class CBuyOrder {
      */
     public void setUpdateTime(Date updateTime) {
         this.updateTime = updateTime;
+    }
+
+    public BigDecimal getParentRewardAmount() {
+        return parentRewardAmount;
+    }
+
+    public void setParentRewardAmount(BigDecimal parentRewardAmount) {
+        this.parentRewardAmount = parentRewardAmount;
+    }
+
+    public BigDecimal getNodeRewardAmount() {
+        return nodeRewardAmount;
+    }
+
+    public void setNodeRewardAmount(BigDecimal nodeRewardAmount) {
+        this.nodeRewardAmount = nodeRewardAmount;
+    }
+
+    public BigDecimal getLastAmount() {
+        return lastAmount;
+    }
+
+    public void setLastAmount(BigDecimal lastAmount) {
+        this.lastAmount = lastAmount;
     }
 }

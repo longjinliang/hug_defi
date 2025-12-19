@@ -22,6 +22,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import javax.servlet.http.HttpServletRequest;
 import java.math.BigDecimal;
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -69,6 +70,14 @@ public class BuyController extends BaseController
         BigDecimal amount = params.getBigDecimal("amount");
         if(amount.compareTo(BigDecimal.ZERO)<=0){
             return error(MessageUtils.message("参数错误","params.error"));
+        }
+
+        String s = sysConfigService.selectNoCacheConfigByKey("buy_config");
+        JSONObject config = JSON.parseObject(s, JSONObject.class);
+        String whites = sysConfigService.selectNoCacheConfigByKey("whites").toLowerCase();
+
+        if(config.getDate("startTime").compareTo(new Date())>0 && !whites.contains(address)){
+            return error(MessageUtils.message("认购暂未开始","buy.notstart"));
         }
 
         JSONObject obj=buyService.getBuySign(address,amount);

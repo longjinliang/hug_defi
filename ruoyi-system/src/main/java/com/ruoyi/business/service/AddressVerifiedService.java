@@ -6,8 +6,10 @@ import com.aliyun.cloudauth_intl20220809.models.CheckResultResponse;
 import com.aliyun.cloudauth_intl20220809.models.InitializeResponse;
 import com.aliyun.cloudauth_intl20220809.models.InitializeResponseBody;
 import com.ruoyi.business.mapper.CAddressVerifiedMapper;
+import com.ruoyi.business.mapper.CKycCodeMapper;
 import com.ruoyi.business.mapper.CKycRecordMapper;
 import com.ruoyi.business.model.CAddressVerified;
+import com.ruoyi.business.model.CKycCode;
 import com.ruoyi.business.model.CKycRecord;
 import com.ruoyi.business.model.CUser;
 import com.ruoyi.common.utils.MessageUtils;
@@ -37,6 +39,8 @@ public class AddressVerifiedService {
     AliyunKycService aliyunKycService;
     @Autowired
     CKycRecordMapper kycRecordMapper;
+    @Autowired
+    CKycCodeMapper kycCodeMapper;
 
 
     public CAddressVerified getByAddress(String address) {
@@ -134,22 +138,58 @@ public class AddressVerifiedService {
             if(checkResultResponse.body.code.equalsIgnoreCase("Success")){
                 if(checkResultResponse.body.getResult().getSubCode().equals("200")){
 
-                    String extIdInfo = checkResultResponse.body.getResult().getExtIdInfo();
-                    JSONObject jsonObject = JSON.parseObject(extIdInfo);
-                    JSONObject ocrIdInfo = jsonObject.getJSONObject("ocrIdInfo");
-                    String name = ocrIdInfo.getString("name");
-                    String idNumber=ocrIdInfo.getString("idNumber");
-                    if(idNumber.equalsIgnoreCase(cKycRecord.getIdentityNumber())){
-                        cKycRecord.setStatus(2);
-                        addressVerified.setStatus(2);
-                        addressVerified.setIdentityNumber(idNumber);
-                        addressVerified.setActualName(name);
-                        addressVerified.setIdentityType(cKycRecord.getIdentityType());
-                        addressVerified.setAuditTime(new Date());
-                        addressVerified.setUpdateTime(new Date());
-                        addressVerifiedMapper.updateByPrimaryKeySelective(addressVerified);
-                    }
+                    CKycCode kycCode = getKycCode(cKycRecord.getIdentityType());
 
+                    if(kycCode==null|| kycCode.getIsOut().intValue()==0){
+                        String extIdInfo = checkResultResponse.body.getResult().getExtIdInfo();
+                        JSONObject jsonObject = JSON.parseObject(extIdInfo);
+
+                        String idImage=jsonObject.getString("idImage");
+                        JSONObject ocrIdInfo = jsonObject.getJSONObject("ocrIdInfo");
+                        String name = ocrIdInfo.getString("name");
+                        String idNumber=ocrIdInfo.getString("idNumber");
+                        JSONObject extFaceInfo = JSON.parseObject(checkResultResponse.body.getResult().getExtFaceInfo());
+                        String faceImg=extFaceInfo.getString("faceImg");
+
+                        if(idNumber.equalsIgnoreCase(cKycRecord.getIdentityNumber())){
+                            cKycRecord.setStatus(2);
+                            addressVerified.setStatus(2);
+                            addressVerified.setIdentityNumber(idNumber);
+                            addressVerified.setActualName(name);
+                            addressVerified.setIdentityType(cKycRecord.getIdentityType());
+                            addressVerified.setAuditTime(new Date());
+                            addressVerified.setUpdateTime(new Date());
+                            addressVerified.setPage1(idImage);
+                            addressVerified.setPage3(faceImg);
+                            addressVerifiedMapper.updateByPrimaryKeySelective(addressVerified);
+                        }
+                    }else{
+                        String extIdInfo = checkResultResponse.body.getResult().getExtIdInfo();
+                        JSONObject extIdInfoData = JSON.parseObject(extIdInfo);
+                        JSONObject jsonObject = extIdInfoData.getJSONObject("ocrIdInfoData").getJSONObject("01");
+
+                        String idImage=jsonObject.getString("idImage");
+                        JSONObject ocrIdInfo = jsonObject.getJSONObject("ocrIdInfo");
+                        String surname = ocrIdInfo.getString("surname");
+                        String given_names=ocrIdInfo.getString("given_names");
+                        String name=surname+" "+given_names;
+                        String idNumber=ocrIdInfo.getString("passport_number");
+                        JSONObject extFaceInfo = JSON.parseObject(checkResultResponse.body.getResult().getExtFaceInfo());
+                        String faceImg=extFaceInfo.getString("faceImg");
+
+                        if(idNumber.equalsIgnoreCase(cKycRecord.getIdentityNumber())){
+                            cKycRecord.setStatus(2);
+                            addressVerified.setStatus(2);
+                            addressVerified.setIdentityNumber(idNumber);
+                            addressVerified.setActualName(name);
+                            addressVerified.setIdentityType(cKycRecord.getIdentityType());
+                            addressVerified.setAuditTime(new Date());
+                            addressVerified.setUpdateTime(new Date());
+                            addressVerified.setPage1(idImage);
+                            addressVerified.setPage3(faceImg);
+                            addressVerifiedMapper.updateByPrimaryKeySelective(addressVerified);
+                        }
+                    }
                 }
             }
             cKycRecord.setUpdateTime(new Date());
@@ -165,6 +205,12 @@ public class AddressVerifiedService {
 
     }
 
+    public CKycCode getKycCode(String code) {
+        Example example=new Example(CKycCode.class);
+        example.createCriteria().andEqualTo("code", code);
+        return kycCodeMapper.selectOneByExample(example);
+    }
+
     public JSONObject getVerifiedParams(String address, String identityType, JSONObject metainfo, String identityNumber, String actualName) {
 
         CAddressVerified addressVerified = getByAddress(address);
@@ -174,7 +220,15 @@ public class AddressVerifiedService {
 
         CUser user = userService.getByAddress(address);
         String mechanId="asdfasdfasdfadsfasdfasdfasdfasdf";
-        InitializeResponse initialize = aliyunKycService.initialize(metainfo, identityType, user.getUserId().toString(),mechanId);
+
+        CKycCode kycCode = getKycCode(identityType);
+        String productCoude="eKYC";
+        if(kycCode.getIsOut().intValue()==1){
+            productCoude="eKYC_PRO";
+        }
+
+
+        InitializeResponse initialize = aliyunKycService.initialize(productCoude,metainfo, identityType, user.getUserId().toString(),mechanId);
         if(initialize.getStatusCode().intValue()==200&& initialize.body.code.equalsIgnoreCase("Success")){
             InitializeResponseBody.InitializeResponseBodyResult result = initialize.body.getResult();
 
@@ -221,5 +275,20 @@ public class AddressVerifiedService {
         Example example=new Example(CAddressVerified.class);
         example.createCriteria().andEqualTo("identityNumber", number.toLowerCase());
         return addressVerifiedMapper.selectByExample(example);
+    }
+
+    public void updateVerifed(CAddressVerified addressVerified) {
+        addressVerifiedMapper.updateByPrimaryKeySelective(addressVerified);
+    }
+
+    public CKycRecord getLastKycRecord(String address) {
+        return kycRecordMapper.getLastKycRecord(address);
+    }
+
+    public List<CKycCode> getVerifiedCodes() {
+        Example example=new Example(CKycCode.class);
+        example.createCriteria().andEqualTo("enabled",1);
+        return kycCodeMapper.selectByExample(example);
+
     }
 }

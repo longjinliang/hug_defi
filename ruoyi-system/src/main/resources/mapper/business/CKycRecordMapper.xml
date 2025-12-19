@@ -21,4 +21,8 @@
     <result column="identity_type" property="identityType" jdbcType="VARCHAR" />
   </resultMap>
 
+  <select id="getLastKycRecord" resultMap="BaseResultMap">
+    select * from c_kyc_record where address=#{address} order by id desc limit 1
+  </select>
+
 </mapper>

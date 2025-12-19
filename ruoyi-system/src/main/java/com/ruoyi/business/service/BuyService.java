@@ -256,6 +256,9 @@ public class BuyService {
         order.setPrice(buyStage.getUsdtPrice());
         order.setStatus(1);
         order.setTokenAmount(tokenAmount);
+        order.setParentRewardAmount(directRewardAmount);
+        order.setNodeRewardAmount(nodeRewardAmount);
+        order.setLastAmount(usdtAmount.subtract(directRewardAmount).subtract(nodeRewardAmount));
         order.setHash(hash);
         order.setLoginIp(user.getLoginIp());
         order.setCreateTime(new Date());
@@ -312,7 +315,7 @@ public class BuyService {
             reward.setAddress(parent.getAddress());
             reward.setCoin("USDT");
             reward.setRewardAmount(nodeRewardAmount);
-            reward.setUsdtAmount(nodeUsdtAmount);
+            reward.setUsdtAmount(nodeRewardAmount);
             reward.setOrderId(order.getId());
             reward.setRewardType("node_buy_reward");
             reward.setTeamLevel(null);
@@ -370,5 +373,13 @@ public class BuyService {
 
     public JSONObject getBackBuyListSum(String address, Date startTime, Date endTime) {
         return buyOrderMapper.getBackBuyListSum(address,startTime,endTime);
+    }
+
+    public void updateOrder(CBuyOrder order) {
+        buyOrderMapper.updateByPrimaryKeySelective(order);
+    }
+
+    public BigDecimal getRewardAmountByOrderId(Long orderId, String rewardType) {
+        return rewardMapper.getRewardAmountByOrderId(orderId,rewardType);
     }
 }
